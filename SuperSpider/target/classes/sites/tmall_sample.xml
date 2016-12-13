@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+		<site name="tmall" id="tmall_site_id" downloader="com.justme.superspider.plugin.util.WebDriverDownloader" url="https://www.tmall.com/" reqDelay="0s" includeHttps="1" enable="1" charset="utf-8" thread="1" waitQueue="5s">
+			<queueRules policy="and">
+				<rule type="!regex" value="^.*\.(jpg|png|gif).*$" />
+			</queueRules>
+			<options>
+				<option name="drivertype" value="chrome" />
+				<option name="webdriver.chrome.driver" value="#{ClassPath}\chromedriver.exe" />
+			</options>
+			<headers>
+				<header name="User-Agent"
+					value="Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.89 Safari/537.36"></header>
+			</headers>
+			<targets>
+				<sourceRules policy="and">
+					<rule type="regex" value="https://www.tmall.com/.*[.]?.*$">
+						<digUrls>
+							<field name="filter">
+								<parsers>
+									<parser exp="1" />
+								</parsers>
+							</field>
+						</digUrls>
+					</rule>
+				</sourceRules>
+				<target name="tmall_category_1st">
+					<model delay="10s"  parser="com.justme.superspider.plugin.util.WebDriverModelParser">
+						<field name="category_1st" isArray="1">
+							<parsers>
+								<parser xpath="//*[@id='content']/div[2]/div[1]/div[4]/div[1]/div/div/div[1]/div/div[1]/div/a/text()" />
+							</parsers>
+						</field>
+					</model>
+				</target>
+								
+				<target name="tmall_category_2st">
+					<model>
+						<field name="category_2st" isArray="1">
+							<parsers>
+								<parser xpath="//*[@id='content']/div[2]/div[1]/div[3]/div/ul/li/a/text()" />
+							</parsers>
+						</field>
+					</model>
+				</target>
+			</targets>
+		</site>
+</beans>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+		<site name="ftpSite" id="firstFtp"  downloader="com.justme.superspider.plugin.ftp.util.FtpDownloader"  reqDelay="0s" includeHttps="1" enable="1"  thread="2" waitQueue="5s" >
+			<options>
+				<option name="user" value="infcn"/>
+				<option name="pwd" value="infcn" />
+				<option name="host" value="192.168.10.21" />
+				<option name="localPath" value="D:/ftp123"></option>
+			</options>
+			<targets>
+				<target name="ftpFile">
+					<urlRules>
+						<rule type="regex" value=".*[.].*$" />
+					</urlRules>
+					<model parser="com.my.tikaParser">
+						<field name="title">
+							<parsers>
+								<parser tika="//div[@id='content_left']//div[@id>0]//h3//a//text()"/>
+							</parsers>
+						</field>
+					</model>
+				</target>
+			</targets>
+			<plugins>
+				<plugin enable="1" name="spider_ftp_plugin" version="0.0.1" desc="这是小超自己实现的ftp插件!">
+					<extensions>
+						<extension point="task_poll">
+							<impl value="com.justme.superspider.plugin.ftp.impl.TaskPollPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="fetch">
+							<impl value="com.justme.superspider.plugin.ftp.impl.FetchPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="dig">
+							<impl value="com.justme.superspider.plugin.ftp.impl.DigPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="dup_removal">
+							<impl value="com.justme.superspider.plugin.ftp.impl.DupRemovalPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="task_push">
+							<impl value="com.justme.superspider.plugin.ftp.impl.TaskPushPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="target">
+							<impl value="com.justme.superspider.plugin.ftp.impl.TargetPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="parse">
+							<impl value="com.justme.superspider.plugin.ftp.impl.ParsePointImpl" sort="0"></impl>
+						</extension>
+					</extensions>
+				</plugin>
+			</plugins>
+		</site>
+</beans>

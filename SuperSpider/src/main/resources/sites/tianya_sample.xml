@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+		<site name="tianya" id="tianya_site_id" url="http://bbs.tianya.cn/list-907-1.shtml" reqDelay="0s" includeHttps="1" enable="1" charset="utf-8"  thread="2" waitQueue="5s" >
+			<queueRules policy="and">
+				<rule type="!regex" value="^.*\.(jpg|png|gif).*$" />
+			</queueRules>
+			<outputs>
+				<options type="mysql">
+					<option name="dbname" value="superspider" />
+					<option name="host" value="127.0.0.1" />
+					<option name="port" value="3306" />
+					<option name="username" value="root" />
+					<option name="password" value="123" />
+					<option name="fetchsize" value="100"/>
+				</options>
+				<!-- <options type="mongo">
+					<option name="dbname" value="superspider" />
+					<option name="host" value="192.168.137.129" />
+					<option name="port" value="27017" />
+				</options> -->
+			</outputs>
+			<headers>
+				<header name="User-Agent" value="Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.89 Safari/537.36"></header>
+			</headers>
+			<targets>
+			    <sourceRules policy="and">
+					<rule type="regex" value="http://bbs.tianya.cn/.*[.]?.*$">
+						<!--
+						  | 递归从下一页抓取新URL
+						  | 这个节点跟 <model> 节点是一样的结构，只不过名称不叫model而是叫做nextPage而已
+						-->
+						<digUrls>
+							<!-- 当前页中下一页的链接，参数  -->
+							<field name="pageNum" isParam="1">
+								<parsers>
+									<!-- 当前列表页中获取下一个的连接-->
+									<parser xpath="//div[@class='links']//a[last()]" attribute="href"/>
+								</parsers>
+							</field>
+							<field name="detailUrl" isArray="1">
+								<parsers>
+									<parser xpath="//table[@class='tab-bbs-list tab-bbs-list-2']//tbody//tr//td[1]//a[last()]" attribute="href"/>
+									<parser exp="'http://bbs.tianya.cn'+$this"/>
+								</parsers>
+							</field>
+							<!-- 拼凑出下一页URL，注意里面这里$fields.pageNum引用了上面那个变量 -->
+							<field name="nextUrl">
+								<parsers>
+									<parser exp="'http://bbs.tianya.cn'+$fields.pageNum" />
+								</parsers>
+							</field>
+						</digUrls>
+					</rule>
+				</sourceRules>
+				<target name="tianyaList">
+					<urlRules policy="and">
+						<rule type="start" value="http://bbs.tianya.cn/list" />
+					</urlRules>
+					<model >
+						<field name="title" isArray="1">
+							<parsers>
+								<parser  xpath="//table[@class='tab-bbs-list tab-bbs-list-2']//tbody//tr//td[1]//a//text()"/>
+							</parsers>
+						</field>
+						<field name="author" isArray="1">
+							<parsers>
+								<parser xpath="//table[@class='tab-bbs-list tab-bbs-list-2']/tbody/tr/td[2]/a/text()"/>
+							</parsers>
+						</field>
+						<field name="replynum" isArray="1">
+							<parsers>
+								<parser xpath="//table[@class='tab-bbs-list tab-bbs-list-2']/tbody/tr/td[3]/text()"/>
+							</parsers>
+						</field>
+						<field name="replydate" isArray="1">
+							<parsers>
+								<parser xpath="//table[@class='tab-bbs-list tab-bbs-list-2']/tbody/tr/td[5]/text()"/>
+							</parsers>
+						</field>
+						<field name="detailUrl" isArray="1">
+							<parsers>
+								<parser xpath="//table[@class='tab-bbs-list tab-bbs-list-2']//tbody//tr//td[1]//a" attribute="href"/>
+								<parser exp="'http://bbs.tianya.cn'+$this"></parser>
+							</parsers>
+						</field>
+						<!-- <field name="page">
+							<parsers>
+								<parser exp="$page_content"></parser>
+							</parsers>
+						</field> -->
+					</model>
+				</target>
+				<target name="tianyaDetail">
+					<urlRules policy="and">
+						<rule type="start" value="http://bbs.tianya.cn/post" />
+					</urlRules>
+					<model>
+						<field name="content">
+							<parsers>
+								<parser  xpath="//div[@class='bbs-content clearfix']/text()"/>
+							</parsers>
+						</field>
+					</model>
+				</target>
+			</targets>
+			<plugins>
+				<plugin enable="1" name="spider_ftp_plugin" version="0.0.1" desc="这是默认的Web-Plugin插件,实现了所有的扩展点...">
+					<extensions>
+						<!--
+						  | point:扩展点名它们包括  task_poll, begin, fetch, dig, dup_removal, task_sort, task_push, target, parse, pojo, end
+						-->
+						<extension point="task_poll">
+							<!--
+							  | 扩展点实现类
+							  | sort: 排序，同一个扩展点有多个实现类，这些实现类会以责任链的方式进行执行，因此它们的执行顺序将变得很重要
+							-->
+							<impl value="com.justme.superspider.plugin.impl.TaskPollPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="begin">
+							<impl value="com.justme.superspider.plugin.impl.BeginPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="fetch">
+							<impl value="com.justme.superspider.plugin.impl.FetchPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="dig">
+							<impl value="com.justme.superspider.plugin.impl.DigPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="dup_removal">
+							<impl value="com.justme.superspider.plugin.impl.DupRemovalPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="task_sort">
+							<impl value="com.justme.superspider.plugin.impl.TaskSortPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="task_push">
+							<impl value="com.justme.superspider.plugin.impl.TaskPushPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="target">
+							<impl value="com.justme.superspider.plugin.impl.TargetPointImpl" sort="0"></impl>
+						</extension>
+						<extension point="parse">
+							<impl value="com.justme.superspider.plugin.impl.ParsePointImpl" sort="0"></impl>
+						</extension>
+						<extension point="end">
+							<impl value="com.justme.superspider.plugin.impl.EndPointImpl" sort="0"></impl>
+						</extension>
+					</extensions>
+				</plugin>
+			</plugins>
+		</site>
+</beans>
